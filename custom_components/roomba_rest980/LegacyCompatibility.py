@@ -105,18 +105,18 @@ def createExtendedAttributes(self) -> dict[str, any]:
     # Networking
     signal = data.get("signal")
     rssi = signal.get("rssi")
+    # Run total(s?)
+    bbrun = data.get("bbrun")
+    numDirt = bbrun.get("nScrubs")
+    numEvacs = bbrun.get("nEvacs")
     # Runtime Statistics
-    runtimeStats = data.get("runtimeStats")
+    runtimeStats = data.get("runtimeStats") or bbrun
     sqft = runtimeStats.get("sqft")
     hr = runtimeStats.get("hr")
     timeMin = runtimeStats.get("min")
     # Mission total(s?)
     bbmssn = data.get("bbmssn")
     numMissions = bbmssn.get("nMssn")
-    # Run total(s?)
-    bbrun = data.get("bbrun")
-    numDirt = bbrun.get("nScrubs")
-    numEvacs = bbrun.get("nEvacs")
     # numEvacs only for I7+/S9+ Models (Clean Base)
     pmaps = data.get("pmaps", [])
     pmap0id = next(iter(pmaps[0]), None) if pmaps else None

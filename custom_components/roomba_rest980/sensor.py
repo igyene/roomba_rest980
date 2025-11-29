@@ -695,7 +695,7 @@ class RoombaTotalArea(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        runtimeStats = data.get("runtimeStats") or {}
+        runtimeStats = data.get("runtimeStats") or data.get("bbrun") or {}
         sqft = runtimeStats.get("sqft")
         self._attr_native_value = sqft
         self.async_write_ha_state()
@@ -717,7 +717,7 @@ class RoombaTotalTime(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        runtimeStats = data.get("runtimeStats") or {}
+        runtimeStats = data.get("runtimeStats") or data.get("bbrun") or {}
         hr = runtimeStats.get("hr")
         timeMin = runtimeStats.get("min")
         self._attr_native_value = (hr * 60) + timeMin
