@@ -732,9 +732,8 @@ class RoombaTotalJobs(RoombaSensor):
     def __init__(self, coordinator, entry) -> None:
         """Create a new job initiator reading."""
         super().__init__(coordinator, entry)
-        self._attr_native_unit_of_measurement = UnitOfTime.MINUTES
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
-        self._attr_icon = "mdi:transmission-tower"
+        self._attr_icon = "mdi:flag-checkered"
 
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
