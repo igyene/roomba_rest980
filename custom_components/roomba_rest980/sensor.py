@@ -346,7 +346,7 @@ class RoombaCleanBase(RoombaSensor):
         """Initialize."""
         super().__init__(coordinator, entry)
         self._attr_device_class = SensorDeviceClass.ENUM
-        self._attr_options = list(cleanBaseMappings.values())
+        self._attr_options = list(cleanBaseMappings.values()).append("Unknown")
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:trash-can"
 
