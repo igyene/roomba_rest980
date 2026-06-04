@@ -35,6 +35,11 @@ class RoombaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow."""
 
     VERSION = 2
+    # VERSION = 3
+
+    # async def async_migrate_entry(self, config_entry):
+    #     """Migrate an entry from MD5 of the server URL to the BLID of the robot."""
+    #     _LOGGER.debug("Migrating from version %s", config_entry.version)
 
     _proposed_name: str
     _user_data: dict[str, any]
@@ -42,6 +47,7 @@ class RoombaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, entry_data: dict[str, any]) -> ConfigFlowResult:
         """Perform reauth upon an API authentication error."""
         await self.hass.config_entries.async_reload(self._reauth_entry_id)
+        return self.async_abort(reason="reauth_successful")
 
     async def async_step_cloud(self, user_input=None) -> ConfigFlowResult:
         """Show user the setup for the cloud API."""

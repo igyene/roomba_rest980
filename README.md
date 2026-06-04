@@ -1,34 +1,42 @@
 # roomba_rest980
 
-Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (optional).  
-
-> Braava jet/mops are now available *with partial support!* If anyone has one of these mops and is willing to test, please do so and make an issue if anything goes wrong, or anything is missing! 
+Integrate your iRobot Roomba and Braava Jets with Home Assistant using rest980, and the cloud (optional).
 
 ## Features
 
-- [x] Native Vacuum entity
-- [x] Cloud API connection
-  - [x] Cloud MQTT connection
-    - Testing: I've reverse engineered their MQTT stack somewhat* (but not all available commands) and am still figuring out how it works.
-- [x] Actions
-  - [x] Start
-    - [x] Favorites
-      - This feature requires more testing, to make sure it's actually initiating a favorite cycle.
-    - [ ] Clean all rooms by default
-    - [x] Selective room cleaning
-    - [ ] Two pass feature
-  - [x] Pause
-  - [ ] Unpause
-    - Testing: It may restart a run instead of unpausing.
-  - [x] Return Home
-  - [x] Stop
-  - [x] Spot Clean
-  - [ ] Mapping Run
-- [x] Dynamically grab rooms and add them to the UI (Cloud only)
-  - [x] Selective room cleaning
-  - [x] Grab room data
-  - [x] Create map image
-- [x] Entity attribute parity with jeremywillans' YAML config entry
+| Feature | Local | Cloud |
+|---------|-------|-------|
+| Roomba Vacuum support | ✅ | ✅ |
+| Braava Mop support | ✅ | ✅ |
+| HA Vacuum Entity | ✅ | ✅ |
+| Cloud MQTT | 🔲 | 🔲 |
+| Selective Room Cleaning | ✅ | ✅ |
+| Two Pass | ✅ | ✅ |
+| Grab rooms dynamically | 🔲 | ✅ |
+| Map Image | ⚠️ | ✅ |
+| Favorites | ❌ | ✅ |
+| Start Jobs | ✅ | ✅ |
+| Pause / Resume | ✅ | ✅ |
+| Return Home | ✅ | ✅ |
+| Spot Clean | 🔲 | 🔲 |
+| Mapping Run | 🔲 | 🔲 |
+| Maintenance Parts | 🔲 | 🔲 |
+| Schedules | 🔲 | 🔲 |
+| Entity attribute parity with jeremywillans' YAML config entry | ✅ | ✅ |
+| Real-time map view | ⚠️ | ⚠️ |
+| Real-time robot position | ⚠️ | ⚠️ |
+| Locally grab rooms | 🛠️ | ❌ |
+| [Timeline Report from newer iRobot app](https://github.com/ia74/roomba_rest980/issues/4#issuecomment-3694259760) | ⚠️ | 🛠️ |
+
+🛠️: Planned, WIP  
+❌: Currently not possible  
+⚠️: Planned, requires jailbreak
+
+> I've reverse engineered their MQTT stack and am working on incorporating it into [dorita/rest980.](https://github.com/ia74/dorita980/blob/master/lib/v2/cloud.js)
+
+## Note about Braava
+
+As I don't own a Braava Jet mop, the support for it is purely maintained [by the community and their help!](https://github.com/ia74/roomba_rest980/issues/12) Thus, I can't bug-test the integration with as much time as I can the vacuum part. If you run into any issues, [make an issue and I'll work on fixing them!](https://github.com/ia74/roomba_rest980/issues/new)
 
 ## Why?
 
@@ -45,7 +53,7 @@ I found that working with [jeremywillans/ha-rest980-roomba](https://github.com/j
   - Note that everytime you remap and a room changes, it's ID may change (local users)!
 - Knowledge of your Roomba and rest980 servers' IPs
 
-> I recommend that you use https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card as this is almost done being integrated with it.  
+> I recommend that you use [https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card) as this is almost done being integrated with it.  
 > The only feature that requires testing is the selection of rooms (is separate from using the switch-based built in).
 
 ## Step 1: Setting up rest980: Grab Robot Credentials
@@ -60,12 +68,13 @@ First, you must gather your robot's on-device password and BLID (identifier).
   For Docker users
   </summary>
 Execute this command:  
-  
+
 ```sh
 docker run -it node sh -c "npm install -g dorita980 && get-roomba-password <robotIP>"
 ```
 
 and follow the on-screen instructions.
+
 </details>
 
 <details>
@@ -106,6 +115,14 @@ docker-compose up -d rest980
 ```
 
 You may also add the service to an existing configuration. You do not need to add file binds/mounts, as there are not any.
+
+### More than 1 Roomba
+
+If you have more than one Roomba, check out [the two-robot docker compose file.](docker-compose-two-robots.yaml).
+
+You need to run 1 instance of rest980 *per robot*.  
+The setup remains the same once in Home Assistant, except the ports must change.  
+Note down your rest980 servers ports and which robots they correspond to!
 
 </details>
 
@@ -149,7 +166,7 @@ rest980 will gather all the data about our robot, but the integration will forma
 
 When you install the integration and restart Home Assistant, you may notice it picking up your Roomba.
 
-![Discovery](img/discovery.png)
+![Discovery](.github/img/discovery.png)
 
 This is not due to your rest980 API server being discovered, rather the integration finding your Roomba on the local network.
 
@@ -163,7 +180,7 @@ If not, simply press "Add Integration" and search for "iRobot Roomba (rest980)".
 
 You'll be presented with this popup. 
 
-![Adding the robot](img/ADD.png)
+![Adding the robot](.github/img/setup_integration.png)
 
 Input your rest980 server's url like so:
 
@@ -177,11 +194,11 @@ You may also input your iRobot credentials now, if you want to use cloud feature
 
 If you did it right, you'll see a success screen that has also gotten your given name for the Roomba!
 
-![Added the config!](img/ADDeD.png)
+![Added the config!](.github/img/config_created.png)
 
 If all has gone right, checking the device will show something like this:
 
-![Added the config!](img/fin.png)
+![Added the config!](.github/img/device_entry.png)
 
 ## Step 3.5: Cloud issues.. (Cloud)
 
@@ -189,17 +206,27 @@ iRobot does some unknown things with their cloud API. As of current, my implemen
 
 ## Step 4: Rooms! (Cloud)
 
-Your rooms will be auto-imported, alongside a clean map view, much like the one from the app.  
+Your rooms and favorites will be auto-imported, alongside a clean map view, similar to the one from the app.  
+
+![Map view](.github/img/map_view.png)
+
 This allows you to selectively clean rooms, and control it by automation (tutorial later).  
-Rooms you select will be cleaned in the order you select. Two-pass functionailty coming soon as well.
+Rooms you select will be cleaned in the order you select, with how many passes you define.
 
-![Added the config!](img/rooms.png)
+![Added the config!](.github/img/rooms.png)
 
-Room types and names are also dynamically imported as to be expected.
+To clean a room, simply click its option and make it either:
 
-To work with this, switch the "Clean (room)" switches on in the order you like, then press the Clean button from the vacuum's entity!
+- Don't Clean
+- One Pass
+- Two Passes
 
-![Room selection](img/clean.png)
+Then press the Clean button from the vacuum's entity!
+
+![Two pass](.github/img/two_pass.png)
+
+
+![Room selection](.github/img/clean.png)
 
 ## Step 4: Rooms! (rest980 ONLY)
 
@@ -208,7 +235,7 @@ Rooms are not given to us easily when we're fully local, but a fix is in progres
 
 ## Important Note
 
-From this part on, the guide will not diverge into Cloud/Local unless required and will assume you are using Cloud features, but most of it should be generically implemented.
+From this part on, the guide will not diverge into Cloud/Local unless required and will assume you are using Cloud features, but most of it will match up.
 
 ## Step 5: Robot Maintenance / Done!
 
@@ -220,7 +247,7 @@ The integration adds all the attributes that you would expect from [jeremywillan
 
 You may see the code for this in [LegacyCompatibility.py](custom_components/roomba_rest980/LegacyCompatibility.py)
 
-![Compatibility](img/compat.png)
+![Compatibility](.github/img/compat.png)
 
 One minor issue is that the Vacuum entity only supports these states:
 ```

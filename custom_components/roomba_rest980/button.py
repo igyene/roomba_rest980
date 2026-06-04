@@ -40,7 +40,7 @@ class FavoriteButton(ButtonEntity):
         self._attr_extra_state_attributes = data
         self._data = data
         self._attr_icon = "mdi:star"
-        self._attr_entity_registry_enabled_default = not data["hidden"]
+        self._attr_entity_registry_enabled_default = not data.get("hidden", False)
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.unique_id)},
             "name": entry.title,
@@ -54,6 +54,6 @@ class FavoriteButton(ButtonEntity):
             "rest980_clean",
             service_data={
                 "base_url": self._entry.data["base_url"],
-                "payload": {"cmd": f"favorite_id: {self._data['favorite_id']}"},
+                "payload": self._data.get("commanddefs")[0],
             },
         )

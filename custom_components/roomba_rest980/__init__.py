@@ -11,7 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
 from .coordinator import RoombaCloudCoordinator, RoombaDataCoordinator
-from .switch import RoomSwitch
+from .select import CleanRoomPasses
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -26,7 +26,7 @@ class RoombaRuntimeData:
     cloud_enabled: bool = False
     cloud_coordinator: RoombaCloudCoordinator = None
 
-    switched_rooms: dict[str, RoomSwitch] = {}
+    switched_rooms: dict[str, CleanRoomPasses] = {}
 
     def __init__(
         self,
@@ -59,16 +59,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up cloud coordinator if enabled
     if entry.data["cloud_api"]:
         cloud_coordinator = RoombaCloudCoordinator(hass, entry)
+        try:
+            await cloud_coordinator.async_config_entry_first_refresh()
 
-        await cloud_coordinator.async_config_entry_first_refresh()
+            # Start background task for cloud setup and BLID matching
+            hass.async_create_task(
+                _async_setup_cloud(hass, entry, coordinator, cloud_coordinator)
+            )
 
-        # Start background task for cloud setup and BLID matching
-        hass.async_create_task(
-            _async_setup_cloud(hass, entry, coordinator, cloud_coordinator)
-        )
-
-        # Update runtime data with cloud coordinator
-        entry.runtime_data.cloud_coordinator = cloud_coordinator
+            # Update runtime data with cloud coordinator
+            entry.runtime_data.cloud_coordinator = cloud_coordinator
+        except Exception as e:  # pylint: disable=broad-except
+            _LOGGER.warning(
+                "Cloud API unavailable, continuing with local only: %s", e
+            )
+            cloud_coordinator = None
     else:
         cloud_coordinator = None
 
@@ -116,7 +121,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
                 if response.status != 200:
                     _LOGGER.error("Failed to send clean command: %s", response.status)
                 else:
-                    _LOGGER.debug("Action sent successfully")
+                    _LOGGER.debug(f"Action {action} sent successfully")
         except Exception as e:  # pylint: disable=broad-except
             _LOGGER.error("Error sending clean command: %s", e)
 
@@ -141,7 +146,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Safely remove Roombas."""
     await hass.config_entries.async_unload_platforms(
-        entry, ["vacuum", "sensor", "switch", "button", "camera"]
+        entry, ["vacuum", "select", "sensor", "button", "camera"]
     )
     return True
 
@@ -154,9 +159,6 @@ async def _async_setup_cloud(
 ) -> None:
     """Set up cloud coordinator and perform BLID matching in background."""
     try:
-        # Refresh cloud data
-        await cloud_coordinator.async_config_entry_first_refresh()
-
         # Perform BLID matching only if not already stored in config entry
         if "robot_blid" not in entry.data:
             matched_blid = await _async_match_blid(
@@ -171,9 +173,8 @@ async def _async_setup_cloud(
         else:
             # Use stored BLID from config entry
             entry.runtime_data.robot_blid = entry.data["robot_blid"]
-
         await hass.config_entries.async_forward_entry_setups(
-            entry, ["switch", "button", "camera"]
+            entry, ["select", "button", "camera"]
         )
 
     except Exception as e:  # pylint: disable=broad-except
@@ -189,13 +190,16 @@ async def _async_match_blid(
 ) -> None:
     """Match local Roomba with cloud robot by comparing device info."""
     try:
+        _LOGGER.debug("Attributes received: %s", cloud_coordinator.data.items())
         for blid, robo in cloud_coordinator.data.items():
+            if not isinstance(robo, dict):
+                continue
             try:
                 # Get cloud robot info
                 robot_info = robo.get("robot_info") or {}
-                cloud_sku = robot_info.get("sku")
-                cloud_sw_ver = robot_info.get("softwareVer")
-                cloud_name = robot_info.get("name")
+                cloud_sku = robot_info.get("sku", "None")
+                cloud_sw_ver = robot_info.get("softwareVer", "None")
+                cloud_name = robot_info.get("name", "None")
 
                 # Get local robot info
                 local_data = coordinator.data or {}
@@ -210,7 +214,7 @@ async def _async_match_blid(
                     and cloud_name == local_name
                 ):
                     entry.runtime_data.robot_blid = blid
-                    _LOGGER.info("Matched local Roomba with cloud robot %s", blid)
+                    _LOGGER.debug("Matched local Roomba with cloud robot %s", blid)
                     break
 
             except (KeyError, TypeError) as e:

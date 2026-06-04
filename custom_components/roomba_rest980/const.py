@@ -6,10 +6,13 @@ DOMAIN = "roomba_rest980"
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
 
 notReadyMappings = {
+    -1: "Unknown Ready Status",
     0: "n-a",
     2: "Uneven Ground",
+    16: "Bumped Unexpectedly",
     15: "Low Battery",
     31: "Fill Tank",
+	34: "Not Ready",
     39: "Pending",
     48: "Path Blocked",
     68: "Updating Map",
@@ -17,6 +20,7 @@ notReadyMappings = {
 
 ## Some mappings thanks to https://github.com/NickWaterton/Roomba980-Python/blob/master/roomba/roomba.py
 errorMappings = {
+    -1: "Unknown Roomba Error",
     0: "n-a",
     15: "Reboot Required",
     18: "Docking Issue",
@@ -97,6 +101,7 @@ errorMappings = {
     122: "Charging system error",
     123: "Battery not initialized",
     216: "Charging base bag full",
+    1010: "Clear Roomba's Path"
 }
 
 cycleMappings = {
@@ -135,6 +140,8 @@ binMappings = {True: "Full", False: "Not Full"}
 yesNoMappings = {True: "Yes", False: "No"}
 
 cleanBaseMappings = {
+    -1: "Unknown", # Added for RoombaCleanBase
+    -2: "Not Available",
     300: "Ready",
     301: "Ready",
     302: "Empty",
@@ -201,4 +208,10 @@ regionTypeMappings = {
     "sun_room": "mdi:sun-angle",
     "unfinished_basement": "mdi:home-floor-b",
     "workshop": "mdi:toolbox",
+}
+
+# I need to find more of these!
+zoneTypeMappings = {
+    "default": "mdi:map-marker",
+    "furniture": "mdi:sofa-single",
 }
